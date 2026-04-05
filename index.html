@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Progress Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f5f5f7;
+            margin: 0;
+        }
+
+        /* Контейнер для отображения на экране */
+        .preview-container {
+            background: white;
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            background-color: white;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 25px;
+            border-radius: 25px;
+            border: 2px solid #ff3b30;
+        }
+
+        input {
+            padding: 12px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #e5e5ea;
+            border-radius: 12px;
+            width: 140px;
+            outline: none;
+        }
+
+        input:focus { border-color: #ff3b30; }
+
+        button {
+            padding: 15px 30px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div class="preview-container">
+        <canvas id="mainCanvas" width="800" height="800" style="width: 400px; height: 400px;"></canvas>
+    </div>
+
+    <div class="controls">
+        <label style="color: #8e8e93; font-weight: bold;">ПРОЦЕНТЫ:</label>
+        <input type="number" id="percentInput" value="5" step="any">
+        <button id="saveBtn">скачатьь</button>
+    </div>
+
+<script>
+    // Объявляем переменные ОДИН раз
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const input = document.getElementById('percentInput');
+    const saveBtn = document.getElementById('saveBtn');
+
+    function draw() {
+        let percent = parseFloat(input.value);
+        if (isNaN(percent)) percent = 0;
+        if (percent > 100) percent = 100;
+        if (percent < 0) percent = 0;
+
+        const size = canvas.width;
+        const center = size / 2;
+        const radius = size * 0.35;
+        const strokeWidth = size * 0.08;
+
+        // 1. Очищаем холст
+        ctx.clearRect(0, 0, size, size);
+
+        // 2. ЗАЛИВАЕМ ФОН БЕЛЫМ (чтобы картинка не была прозрачной)
+        ctx.fillStyle = "white"; 
+        ctx.fillRect(0, 0, size, size); 
+
+        // 3. Рисуем подложку (серый круг)
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, 2 * Math.PI);
+        ctx.lineWidth = strokeWidth;
+        ctx.strokeStyle = '#eeeeee';
+        ctx.stroke();
+
+        // 4. Рисуем прогресс (красный) - КРАЯ ПРЯМЫЕ (как в Excel)
+        if (percent > 0) {
+            ctx.beginPath();
+            const startAngle = -0.5 * Math.PI; 
+            const endAngle = startAngle + (percent / 100 * 2 * Math.PI);
+            ctx.arc(center, center, radius, startAngle, endAngle);
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeStyle = '#ff3b30'; 
+            ctx.stroke();
+        }
+
+        // 5. Текст по центру
+        ctx.font = `bold ${size * 0.18}px -apple-system, sans-serif`;
+        ctx.fillStyle = '#ff3b30';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Форматируем текст (убираем лишние нули)
+        let textToShow = parseFloat(percent.toFixed(2)) + '%';
+        ctx.fillText(textToShow, center, center);
+    }
+
+    // Обновляем при вводе
+    input.addEventListener('input', draw);
+
+    // Логика скачивания
+    saveBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = `progress-${input.value}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+
+    // Рисуем сразу при загрузке
+    draw();
+</script>
+
+</body>
+</html>
